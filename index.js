@@ -9,6 +9,10 @@ var SCHEMA_VERSION = 1;
 var CONCURRENCY_LIMIT = 40;
 
 function OnlyIfChangedPlugin(opts) {
+  this.ignored = [];
+  this.ignored = opts.ignored;
+  this.ignoreRegExp = buildRegExp(process.cwd(), this.ignored);
+  console.log(this.ignoredDirs, '!!!!this ignored dirs called!!!!');
   if (!opts.cacheDirectory) throw new Error('missing required opt cacheDirectory');
   if (!opts.cacheIdentifier) throw new Error('missing required opt cacheIdentifier');
   this.cacheDirectory = opts.cacheDirectory;
@@ -31,8 +35,10 @@ OnlyIfChangedPlugin.prototype.readCacheFile = function() {
 
 OnlyIfChangedPlugin.prototype.updateDependenciesMtimes = function(fileDependencies, done) {
   var pluginContext = this;
-  mtime.getFilesMtimes(fileDependencies, this.concurrencyLimit, function(err, filesMtimes) {
+  mtime.getFilesMtimes(fileDependencies, this.concurrencyLimit, this.ignoreRegExp, function(err, filesMtimes) {
+    console.log('filesMtimes', filesMtimes);
     if (err) return done(err);
+
 
     // merge in updated mtimes
     Object.keys(filesMtimes).forEach(function(file) {
@@ -121,7 +127,8 @@ OnlyIfChangedPlugin.prototype.apply = function(compiler) {
 
   // collect info about input dependencies to compilation
   compiler.plugin('after-compile', function(compilation, afterCompileDone) {
-    // get updated mtimes of file dependencies of compilation
+    // get updated mtimes of file dependencies of compilation\
+    // console.log(compiler, 'compiler');
     pluginContext.updateDependenciesMtimes(compilation.fileDependencies, afterCompileDone);
   });
 
@@ -162,6 +169,22 @@ function makeCacheRecord() {
     inputFilesMtimes: {},
     outputFilesHashes: {},
   };
+}
+
+function buildRegExp(rootDir, ignored) {
+  var regExp = rootDir.replace(/\//g, '\\/') + '\\/';
+  if (rootDir && ignored) {
+    for (var i = 0; i++; i < ignored.length) {
+      if (i === 0) {
+        regExp += '(' + ignored[i];
+      } else if (i === ignored.length - 1) {
+        regExp += '|' + ignored[i] + ')';
+      } else {
+        regExp += '|' + ignored[i];
+      }
+    }
+  }
+  return regExp;
 }
 
 module.exports = OnlyIfChangedPlugin;

@@ -13,6 +13,11 @@ module.exports = {
     new OnlyIfChangedPlugin({
       cacheDirectory: testUtils.testOutputDir,
       cacheIdentifier: 'cache',
+      ignored: [
+        // 'test',
+        // 'tmp',
+        // 'opts',
+      ],
     }),
   ],
 };
