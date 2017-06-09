@@ -25,12 +25,9 @@ function buildRegExp(rootDir, ignored) {
 }
 
 function OnlyIfChangedPlugin(opts) {
-  console.log(this.ignored);
-  if (opts.ignored && opts.ignored.length) {
-    this.ignored = [];
-    this.ignored = opts.ignored;
-    this.ignoreRegExp = '';
-    this.ignoreRegExp = buildRegExp(process.cwd(), this.ignored);
+  if (opts.ignore && opts.ignore.length) {
+    this.ignore = opts.ignore;
+    this.ignoreRegExp = buildRegExp(process.cwd(), this.ignore);
   }
   if (!opts.cacheDirectory) throw new Error('missing required opt cacheDirectory');
   if (!opts.cacheIdentifier) throw new Error('missing required opt cacheIdentifier');
