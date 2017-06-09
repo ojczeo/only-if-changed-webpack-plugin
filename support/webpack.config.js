@@ -14,9 +14,9 @@ module.exports = {
       cacheDirectory: testUtils.testOutputDir,
       cacheIdentifier: 'cache',
       ignored: [
-        // 'test',
-        // 'tmp',
-        // 'opts',
+        'test',
+        'tmp',
+        'opts',
       ],
     }),
   ],

@@ -8,11 +8,30 @@ var SCHEMA_VERSION = 1;
 // hand-tuned optimal concurrency for a 15" macbook pro :)
 var CONCURRENCY_LIMIT = 40;
 
+function buildRegExp(rootDir, ignored) {
+  var regExp = rootDir.replace(/\//g, '\\/') + '\\/';
+  if (ignored.length) {
+    for (var i = 0; i < ignored.length; i++) {
+      if (i === 0) {
+        regExp += '(' + ignored[i];
+      } else if (i === ignored.length - 1) {
+        regExp += '|' + ignored[i] + ')';
+      } else {
+        regExp += '|' + ignored[i];
+      }
+    }
+  }
+  return regExp;
+}
+
 function OnlyIfChangedPlugin(opts) {
-  this.ignored = [];
-  this.ignored = opts.ignored;
-  this.ignoreRegExp = buildRegExp(process.cwd(), this.ignored);
-  console.log(this.ignoredDirs, '!!!!this ignored dirs called!!!!');
+  console.log(this.ignored);
+  if (opts.ignored && opts.ignored.length) {
+    this.ignored = [];
+    this.ignored = opts.ignored;
+    this.ignoreRegExp = '';
+    this.ignoreRegExp = buildRegExp(process.cwd(), this.ignored);
+  }
   if (!opts.cacheDirectory) throw new Error('missing required opt cacheDirectory');
   if (!opts.cacheIdentifier) throw new Error('missing required opt cacheIdentifier');
   this.cacheDirectory = opts.cacheDirectory;
@@ -36,10 +55,7 @@ OnlyIfChangedPlugin.prototype.readCacheFile = function() {
 OnlyIfChangedPlugin.prototype.updateDependenciesMtimes = function(fileDependencies, done) {
   var pluginContext = this;
   mtime.getFilesMtimes(fileDependencies, this.concurrencyLimit, this.ignoreRegExp, function(err, filesMtimes) {
-    console.log('filesMtimes', filesMtimes);
     if (err) return done(err);
-
-
     // merge in updated mtimes
     Object.keys(filesMtimes).forEach(function(file) {
       pluginContext.cache.inputFilesMtimes[file] = filesMtimes[file];
@@ -169,22 +185,6 @@ function makeCacheRecord() {
     inputFilesMtimes: {},
     outputFilesHashes: {},
   };
-}
-
-function buildRegExp(rootDir, ignored) {
-  var regExp = rootDir.replace(/\//g, '\\/') + '\\/';
-  if (rootDir && ignored) {
-    for (var i = 0; i++; i < ignored.length) {
-      if (i === 0) {
-        regExp += '(' + ignored[i];
-      } else if (i === ignored.length - 1) {
-        regExp += '|' + ignored[i] + ')';
-      } else {
-        regExp += '|' + ignored[i];
-      }
-    }
-  }
-  return regExp;
 }
 
 module.exports = OnlyIfChangedPlugin;
